@@ -1,16 +1,24 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- */
-
 package Main;
+
+import javax.swing.JFrame;
 
 /**
  *
  * @author Helena Amaro
  */
+
 public class Main {
 
     public static void main(String[] args) {
-        System.out.println("Hello World!");
+        
+        JFrame window = new JFrame();
+        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        window.setResizable(false);
+        window.setTitle("2D Adventure");
+        
+        window.setLocationRelativeTo(null);
+        window.setVisible(true);
+        
+        
     }
 }
