@@ -2,70 +2,130 @@ package Main;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import javax.swing.JPanel;
 
 /**
- * Painel principal do jogo que gerencia a tela, as configurações de resolução,
- * e implementa a interface Runnable para criar e controlar a Thread principal do jogo (Game Loop).
+ * Painel principal do jogo. Gerencia a resolução da tela, entrada de dados,
+ * e implementa o Game Loop principal através da interface Runnable.
  */
 public class GamePanel extends JPanel implements Runnable {
 
-    // Configurações de tamanho dos blocos (Tiles)
-    final int originalTileSize = 16; // Tamanho base de cada sprite/tile (16x16 pixels) padrão de jogos retrô
-    final int scale = 3;             // Fator de escala para adaptar a resolução a monitores modernos
+    // --- CONFIGURAÇÕES DE DIMENSÃO E ESCALA (SISTEMA DE TILES) ---
+    final int originalTileSize = 16; // Tamanho base do sprite (16x16 pixels)
+    final int scale = 3;             // Fator de escala para telas modernas
 
-    // Tamanho final do tile escalado: 16 * 3 = 48x48 pixels
+    // Resolução final de cada Tile: 48x48 pixels
     final int tileSize = originalTileSize * scale; 
     
-    // Configurações da matriz da tela (Proporção 4:3)
-    final int maxScreenCol = 16; // Quantidade de colunas horizontais de tiles
-    final int maxScreenRow = 12; // Quantidade de linhas verticais de tiles
+    // Configuração da matriz de exibição (Proporção 4:3)
+    final int maxScreenCol = 16; 
+    final int maxScreenRow = 12; 
     
-    // Dimensões totais da área de renderização do jogo
-    final int screenWidth = tileSize * maxScreenCol;  // Largura final: 768 pixels
-    final int screenHeight = tileSize * maxScreenRow; // Altura final: 576 pixels
+    // Resolução total da janela do jogo (768x576 pixels)
+    final int screenWidth = tileSize * maxScreenCol;  
+    final int screenHeight = tileSize * maxScreenRow; 
 
-    // Thread principal do jogo. Responsável por manter o loop de execução 
-    // em paralelo com a Thread de eventos da interface gráfica (EDT - Event Dispatch Thread)
+    // --- CONTROLE DE TEMPO E ENTRADA ---
+    int FPS = 60;
+    KeyHandler keyH = new KeyHandler(); // Gerenciador de eventos de teclado
+    
+    // Thread dedicada para execução do Game Loop de forma assíncrona à EDT do Swing
     Thread gameThread;
-
+    
+    // --- ATRIBUTOS DO JOGADOR (ESTADO) ---
+    int playerX = 100;
+    int playerY = 100;
+    int playerSpeed = 4;
+    
     /**
-     * Construtor da classe. Define as propriedades físicas e comportamentais do painel de desenho.
+     * Construtor: Inicializa os componentes físicos e propriedades de renderização do painel.
      */
     public GamePanel() {
-        // Define a dimensão preferida do painel utilizando as constantes calculadas de resolução
         this.setPreferredSize(new Dimension(screenWidth, screenHeight));
-        
-        // Define a cor de fundo padrão do painel como preta antes da renderização dos elementos do jogo
         this.setBackground(Color.black);
-        
-        // Ativa o mecanismo de Double Buffering. Faz com que todo o desenho seja processado em uma 
-        // memória em segundo plano (off-screen buffer) antes de ser jogado na tela de uma vez, 
-        // eliminando o efeito de cintilação (flickering) e rasgos na imagem (screen tearing).
-        this.setDoubleBuffered(true);
+        this.setDoubleBuffered(true); // Otimiza a renderização, evitando flickering (cintilação)
+        this.addKeyListener(keyH);     // Registra o escutador de teclas
+        this.setFocusable(true);       // Permite que o painel receba o foco de entrada do teclado
     }
 
     /**
-     * Instancia e inicializa o fluxo de execução assíncrono (Thread) dedicado ao jogo.
+     * Inicializa e dispara a Thread principal do jogo.
      */
     public void startGameThread() {
-        // Cria um novo objeto Thread passando este painel ('this') como o alvo (Runnable) da execução
         gameThread = new Thread(this);
-        
-        // Inicia a execução da nova Thread em paralelo no processador. Internamente, 
-        // o método start() invoca de forma automática o método run() implementado abaixo.
-        gameThread.start();
+        gameThread.start(); // Invoca implicitamente o método run()
     }
 
-    /**
-     * Ponto de entrada obrigatório da interface Runnable. É o corpo de execução da gameThread.
-     * Aqui será implementado o "Game Loop" (Loop Principal), que dita o ritmo das atualizações e renderizações do jogo.
-     */
     @Override
+    /**
+     * Implementação do Game Loop utilizando o método "Delta Time / Accumulator".
+     * Garante atualizações de estado e renderizações sincronizadas à taxa de FPS desejada.
+     */
     public void run() {
-        // TODO: Implementar a lógica do Game Loop (ex: Delta Time ou Sleep Method)
-        // 1. UPDATE: Atualizar informações do jogo (como posições de personagens, física, etc.)
-        // 2. DRAW: Desenhar os elementos atualizados na tela (renderização gráfica)
+        double drawInterval = 1000000000 / FPS; // Intervalo de tempo por quadro em nanossegundos
+        double delta = 0;
+        long lastTime = System.nanoTime();
+        long currentTime; 
+        long timer = 0;
+        int drawCount = 0;
+        
+        while (gameThread != null) {
+            currentTime = System.nanoTime();
+            
+            // Acumula o tempo decorrido fracionado pelo intervalo do alvo de FPS
+            delta += (currentTime - lastTime) / drawInterval;
+            timer += (currentTime - lastTime);
+            lastTime = currentTime;
+            
+            // Quando o acumulador atinge 1, uma atualização física e gráfica é executada
+            if (delta >= 1) {
+                update();   // 1. Atualiza a lógica do jogo
+                repaint();  // 2. Solicita a renderização na tela (chama paintComponent)
+                delta--;
+                drawCount++;
+            }
+            
+            // Monitor de desempenho: Exibe a taxa real de FPS a cada segundo no console
+            if (timer >= 1000000000) {
+                System.out.println("FPS:" + drawCount);
+                drawCount = 0;
+                timer = 0;
+            }
+        }
     }
-
+     
+    /**
+     * Processa a lógica de negócios e atualiza os estados (coordenadas) dos elementos do jogo.
+     */
+    public void update() {
+        // Estrutura condicional para movimentação direcional não-simultânea
+        if (keyH.upPressed) {
+            playerY -= playerSpeed;
+        } else if (keyH.downPressed) {
+            playerY += playerSpeed;
+        } else if (keyH.leftPressed) {
+            playerX -= playerSpeed;
+        } else if (keyH.rightPressed) {
+            playerX += playerSpeed;
+        }
+    }
+    
+    @Override
+    /**
+     * Subsistema de renderização do Swing. Desenha os componentes gráficos na tela.
+     */
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g); // Limpa a tela e redesenha o fundo de acordo com a superclasse
+        
+        // Cast para Graphics2D para obter maior controle sobre geometria e renderização
+        Graphics2D g2 = (Graphics2D) g;
+        
+        // Desenha o jogador (Retângulo branco representando temporariamente o Sprite)
+        g2.setColor(Color.white);
+        g2.fillRect(playerX, playerY, tileSize, tileSize);
+        
+        g2.dispose(); // Libera os recursos do sistema operacional alocados para o contexto gráfico
+    }
 }

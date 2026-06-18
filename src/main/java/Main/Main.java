@@ -42,5 +42,7 @@ public class Main {
         // Torna a janela e seus subcomponentes visíveis na tela, iniciando a exibição da interface gráfica
         window.setVisible(true);
 
+        gamePanel.startGameThread();
+        
     }
 }
