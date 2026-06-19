@@ -1,10 +1,12 @@
 package Main;
 
+import Entity.Player;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import javax.swing.JPanel;
+
 
 /**
  * Painel principal do jogo. Gerencia a resolução da tela, entrada de dados,
@@ -17,7 +19,7 @@ public class GamePanel extends JPanel implements Runnable {
     final int scale = 3;             // Fator de escala para telas modernas
 
     // Resolução final de cada Tile: 48x48 pixels
-    final int tileSize = originalTileSize * scale; 
+   public final int tileSize = originalTileSize * scale; 
     
     // Configuração da matriz de exibição (Proporção 4:3)
     final int maxScreenCol = 16; 
@@ -33,6 +35,12 @@ public class GamePanel extends JPanel implements Runnable {
     
     // Thread dedicada para execução do Game Loop de forma assíncrona à EDT do Swing
     Thread gameThread;
+   
+    
+    // --- INSTÂNCIA DA ENTIDADE DO JOGADOR ---
+    // CORREÇÃO: Declarando o objeto player que será gerenciado pelo painel
+    Player player = new Player(this, keyH);
+  
     
     // --- ATRIBUTOS DO JOGADOR (ESTADO) ---
     int playerX = 100;
@@ -100,32 +108,20 @@ public class GamePanel extends JPanel implements Runnable {
      * Processa a lógica de negócios e atualiza os estados (coordenadas) dos elementos do jogo.
      */
     public void update() {
-        // Estrutura condicional para movimentação direcional não-simultânea
-        if (keyH.upPressed) {
-            playerY -= playerSpeed;
-        } else if (keyH.downPressed) {
-            playerY += playerSpeed;
-        } else if (keyH.leftPressed) {
-            playerX -= playerSpeed;
-        } else if (keyH.rightPressed) {
-            playerX += playerSpeed;
-        }
+         
+    player.update();
+        
     }
     
-    @Override
-    /**
-     * Subsistema de renderização do Swing. Desenha os componentes gráficos na tela.
-     */
+  @Override
     public void paintComponent(Graphics g) {
-        super.paintComponent(g); // Limpa a tela e redesenha o fundo de acordo com a superclasse
+        super.paintComponent(g); 
         
-        // Cast para Graphics2D para obter maior controle sobre geometria e renderização
         Graphics2D g2 = (Graphics2D) g;
         
-        // Desenha o jogador (Retângulo branco representando temporariamente o Sprite)
-        g2.setColor(Color.white);
-        g2.fillRect(playerX, playerY, tileSize, tileSize);
-        
-        g2.dispose(); // Libera os recursos do sistema operacional alocados para o contexto gráfico
+        // CORREÇÃO: Agora 'player' existe e pode ser desenhado perfeitamente
+        player.draw(g2);
+       
+        g2.dispose(); 
     }
 }
