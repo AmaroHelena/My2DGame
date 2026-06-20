@@ -1,6 +1,7 @@
 package Main;
 
 import Entity.Player;
+import Tile.TileManager;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -31,6 +32,8 @@ public class GamePanel extends JPanel implements Runnable {
 
     // --- CONTROLE DE TEMPO E ENTRADA ---
     int FPS = 60;
+    
+    TileManager tileM = new TileManager(this);
     KeyHandler keyH = new KeyHandler(); // Gerenciador de eventos de teclado
     
     // Thread dedicada para execução do Game Loop de forma assíncrona à EDT do Swing
@@ -42,11 +45,7 @@ public class GamePanel extends JPanel implements Runnable {
     Player player = new Player(this, keyH);
   
     
-    // --- ATRIBUTOS DO JOGADOR (ESTADO) ---
-    int playerX = 100;
-    int playerY = 100;
-    int playerSpeed = 4;
-    
+  
     /**
      * Construtor: Inicializa os componentes físicos e propriedades de renderização do painel.
      */
@@ -118,6 +117,8 @@ public class GamePanel extends JPanel implements Runnable {
         super.paintComponent(g); 
         
         Graphics2D g2 = (Graphics2D) g;
+        
+        tileM.draw(g2);
         
         // CORREÇÃO: Agora 'player' existe e pode ser desenhado perfeitamente
         player.draw(g2);
