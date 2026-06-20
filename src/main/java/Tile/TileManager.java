@@ -11,7 +11,7 @@ public class TileManager {
     GamePanel gp;
     Tile[] tile;
     
-    public TileManager(GamePanel gb){
+    public TileManager(GamePanel gp){
         
         this.gp = gp;
         
