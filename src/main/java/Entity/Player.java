@@ -4,6 +4,7 @@ import Main.GamePanel;
 import Main.KeyHandler;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -21,10 +22,23 @@ public class Player extends Entity {
     // Dependências do motor do jogo
     GamePanel gp;
     KeyHandler keyH;
+    
+    public final int screenX;
+    public final int screenY;
 
     public Player(GamePanel gp, KeyHandler keyH) {
         this.gp = gp;
         this.keyH = keyH;
+        
+        screenX = gp.screenWidth/2 - (gp.tileSize/2);
+        screenY = gp.screenHeight/2 - (gp.tileSize/2);
+        
+        solidArea = new Rectangle();
+        solidArea.x = 8;
+        solidArea.y = 16;
+        solidArea.width = 32;
+        solidArea.height = 32;
+        
 
         setDefaultValues();
         getPlayerImagem();
@@ -34,8 +48,8 @@ public class Player extends Entity {
      * Define o estado e os parâmetros físicos iniciais do jogador.
      */
     public void setDefaultValues() {
-        X = 100;
-        Y = 100;
+        worldX = gp.tileSize * 23;
+        worldY = gp.tileSize * 21;
         Speed = 4;
         direction = "down"; // Vetor de direção inicial
     }
@@ -72,18 +86,42 @@ public class Player extends Entity {
             // Atualização dos vetores posicionais e estados de direção
             if (keyH.upPressed == true) {
                 direction = "up";
-                Y -= Speed;
+               
             } else if (keyH.downPressed == true) {
                 direction = "down";
-                Y += Speed;
+                
             } else if (keyH.leftPressed == true) {
                 direction = "left";
-                X -= Speed;
+               
             } else if (keyH.rightPressed == true) {
                 direction = "right";
-                X += Speed;
+               
             }
-
+            
+            collisionOn = false;
+            gp.cChecker.checkTile(this);
+            
+            
+            if(collisionOn == false){
+                
+                switch(direction){
+                
+                case "up":
+                worldY -= Speed;
+                break;
+                case"down":
+                worldY += Speed;
+                break;
+                case "left":
+                worldX -= Speed; 
+                break;
+                case "right":
+                worldX += Speed;
+                break;
+                
+            }
+       
+            }
             // Temporizador de frames para alternância de sprites da animação
             spriteCounter++;
             if (spriteCounter > 12) {
@@ -145,6 +183,6 @@ public class Player extends Entity {
         }
 
         // Desenha a imagem final processada nas coordenadas atuais
-        g2.drawImage(imagem, X, Y, gp.tileSize, gp.tileSize, null);
+        g2.drawImage(imagem, screenX, screenY, gp.tileSize, gp.tileSize, null);
     }
 }

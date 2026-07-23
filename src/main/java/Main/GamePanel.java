@@ -23,13 +23,21 @@ public class GamePanel extends JPanel implements Runnable {
    public final int tileSize = originalTileSize * scale; 
     
     // Configuração da matriz de exibição (Proporção 4:3)
-    public  final int maxScreenCol = 16; 
+    public final int maxScreenCol = 16; 
     public final int maxScreenRow = 12; 
     
     // Resolução total da janela do jogo (768x576 pixels)
    public final int screenWidth = tileSize * maxScreenCol;  
     public final int screenHeight = tileSize * maxScreenRow; 
 
+    //World settings
+    public final int maxWorldCol = 50;
+    public final int maxWorldRow = 50;
+    
+    public final int worldWidth = tileSize * maxWorldCol;
+    public final int worldHeight = tileSize * maxWorldRow;
+    
+    
     // --- CONTROLE DE TEMPO E ENTRADA ---
     int FPS = 60;
     
@@ -38,11 +46,13 @@ public class GamePanel extends JPanel implements Runnable {
     
     // Thread dedicada para execução do Game Loop de forma assíncrona à EDT do Swing
     Thread gameThread;
+    
+   public CollisionChecker cChecker = new CollisionChecker(this);
    
     
     // --- INSTÂNCIA DA ENTIDADE DO JOGADOR ---
     // CORREÇÃO: Declarando o objeto player que será gerenciado pelo painel
-    Player player = new Player(this, keyH);
+    public Player player = new Player(this, keyH);
   
     
   
@@ -112,17 +122,30 @@ public class GamePanel extends JPanel implements Runnable {
         
     }
     
-  @Override
+ /**
+     * Método interno do Swing responsável pela renderização (desenho) dos componentes na tela.
+     * Funciona como o coração do pipeline gráfico (Render Loop) do jogo.
+     */
+    @Override
     public void paintComponent(Graphics g) {
+        // Invoca a superclasse para limpar a tela e evitar rastros visuais (ghosting) do frame anterior
         super.paintComponent(g); 
         
+        // Faz o dows_casting do objeto Graphics para Graphics2D, liberando recursos avançados 
+        // de renderização (como rotação, geometria complexa e melhor controle de subpixels)
         Graphics2D g2 = (Graphics2D) g;
         
+        // CAMADA 1: Desenha o cenário (mapa de fundo). Deve ser chamado primeiro para ficar atrás de tudo
         tileM.draw(g2);
         
-        // CORREÇÃO: Agora 'player' existe e pode ser desenhado perfeitamente
+        // CAMADA 2: Desenha o jogador. Chamado após o mapa para que o personagem fique sobre o cenário
         player.draw(g2);
        
+        // Libera os recursos do sistema e o contexto gráfico imediatamente após o uso.
+        // Essencial para otimizar a memória e evitar vazamentos de recursos (resource leaks)
         g2.dispose(); 
     }
-}
+
+    
+        
+    }
